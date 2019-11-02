@@ -18,14 +18,24 @@ const UserSchema = new mongoose.Schema({
         select: false
     },
 
-    createdAt:{
+    passwordResetToken: {
+        type: String,
+        select: false
+    },
+
+    passwordResetExpires: {
         type: Date,
-        default:Date.now,
+        select: false
+    },
+
+    createdAt: {
+        type: Date,
+        default: Date.now,
     }
 })
 
-UserSchema.pre('save', async function (next){
-    const hash = await bcryptjs.hash(this.password,10)
+UserSchema.pre('save', async function (next) {
+    const hash = await bcryptjs.hash(this.password, 10)
     this.password = hash
     next()
 })
