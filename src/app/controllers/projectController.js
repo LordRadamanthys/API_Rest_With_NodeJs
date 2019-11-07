@@ -10,7 +10,7 @@ router.use(authMiddleware)
 //list
 router.get('/', async (req, res) => {
     try {                                          //trazer user
-        const listProjects = await Project.find().populate('user')
+        const listProjects = await Project.find().populate(['user', 'tasks'])
 
         if (!listProjects)
             return res.send('empty list')
@@ -40,7 +40,18 @@ router.get('/:projectId', async (req, res) => {
 //create
 router.post('/', async (req, res) => {
     try {
-        const project = await Project.create({...req.body, user: req.userId} )
+        const { title, description, tasks } = req.body
+        const project = await Project.create({ title, description, user: req.userId })
+
+        await Promise.all(tasks.map(async task => {
+            const projectTask = new Tasks({ ...task, project: project._id })
+
+            await projectTask.save()
+            project.tasks.push(projectTask)
+
+        }))
+
+        await project.save()
 
         res.send({ project })
     } catch (error) {
@@ -50,14 +61,39 @@ router.post('/', async (req, res) => {
 })
 
 router.put('/:projectId', async (req, res) => {
-    res.send({ user: req.userId })
+    try {
+        const { title, description, tasks } = req.body
+        
+        const project = await Project.findByIdAndUpdate(req.params.projectId, { 
+            title, 
+            description 
+        },{ new: true })
+        console.log(project)
+        project.tasks = []
+        await Tasks.remove({ project: project._id })
+
+        await Promise.all(tasks.map(async task => {
+            const projectTask = new Tasks({ ...task, project: project._id })
+
+            await projectTask.save()
+            project.tasks.push(projectTask)
+
+        }))
+
+        await project.save()
+
+        res.send({ project })
+    } catch (error) {
+        console.log(error)
+        return res.status(400).send({ error: 'Error updating new project' })
+    }
 })
 
 //delete
 router.delete('/:projectId', async (req, res) => {
     try {                                          //trazer user
-        await Project.findByIdAndRemove(req.params.projectId).populate('user')
-
+        await Project.findByIdAndDelete(req.params.projectId).populate('user')
+        
         return res.send("ok")
     } catch (error) {
         console.log(error)
