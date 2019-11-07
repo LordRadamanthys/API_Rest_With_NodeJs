@@ -68,7 +68,7 @@ router.put('/:projectId', async (req, res) => {
             title, 
             description 
         },{ new: true })
-        console.log(project)
+        
         project.tasks = []
         await Tasks.remove({ project: project._id })
 
