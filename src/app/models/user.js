@@ -18,6 +18,12 @@ const UserSchema = new mongoose.Schema({
         select: false
     },
 
+    admin: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
+
     passwordResetToken: {
         type: String,
         select: false
